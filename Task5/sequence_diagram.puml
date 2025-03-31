@@ -1,0 +1,28 @@
+@startuml
+autonumber
+
+participant "Frontend" as FE
+participant "Backend (MES)" as BE
+participant "Cache (Redis)" as Cache
+participant "DB MES" as DB
+
+== Чтение списка заказов ==
+FE -> BE: Запрос списка заказов
+BE -> Cache: Проверка наличия данных
+alt Данные есть в кеше
+    Cache -> BE: Возвращаем кешированные заказы
+else Данных нет в кеше
+    BE -> DB: Запрос списка заказов
+    DB -> BE: Возвращаем заказы
+    BE -> Cache: Кладем заказы в кеш (TTL 5 мин)
+end
+BE -> FE: Отправка списка заказов
+
+== Обновление статуса заказа ==
+FE -> BE: Изменить статус заказа
+BE -> DB: Обновление статуса в базе
+DB -> BE: Подтверждение записи
+BE -> Cache: Инвалидация кеша списка заказов
+BE -> FE: Подтверждение обновления
+
+@enduml
